@@ -1,13 +1,13 @@
 ---
 name: cortes-de-live
-description: Faz cortes virais de lives da Kick, Twitch ou YouTube só com o link do canal ou do VOD — inclusive de lives que ainda estão no ar, usando o chat como termômetro de euforia — grava legenda inteligente no vídeo (palavra por palavra, quem fala, posição que não cobre o personagem) e posta sozinho no TikTok e no Instagram Reels pelo Buffer, com legenda e hashtags (de graça), espalhando nos horários de pico. O trabalho pesado roda de graça no GitHub Actions do próprio usuário. Use quando pedirem cortes, clipes ou shorts de uma live, legenda no vídeo (inclusive de um vídeo avulso), ou para postar cortes.
+description: Faz cortes virais de lives da Kick, Twitch ou YouTube só com o link do canal ou do VOD — inclusive de lives que ainda estão no ar, usando o chat como termômetro de euforia — grava legenda inteligente no vídeo (palavra por palavra, quem fala, posição que não cobre o personagem) e deixa tudo pronto para postar. O trabalho pesado roda de graça no GitHub Actions do próprio usuário. Use quando pedirem cortes, clipes ou shorts de uma live, legenda no vídeo (inclusive de um vídeo avulso).
 ---
 
 # Cortes de live (Kick / Twitch / YouTube)
 
 O usuário manda **só um link**. Quem baixa, transcreve e renderiza é um "robô" no **GitHub Actions do próprio usuário** (o ambiente do Claude não acessa Kick/Twitch/YouTube). Quem **escolhe os momentos é o Claude**, lendo a transcrição, os picos de voz e os picos do chat. O chat é só termômetro: **nunca aparece no vídeo**.
 
-Resultado: cortes verticais 9:16 em 1080p com a webcam do streamer detectada sozinha (câmera em cima + jogo embaixo, ou retrato quando a câmera está em tela cheia) e um `publicacao.md` com título, descrição com crédito e hashtags. **Por padrão todo corte sai com a legenda inteligente** (passo 4b, detalhes em `LEGENDAR.md`): Montserrat Black compacta, só branco com o amarelo passando na palavra dita, quem fala separado, posição que não cobre o personagem, revisada por você antes de gravar. **O título na caixa amarela fica desligado** (o usuário tirou; só ligue `"titulo_no_video": true` se ele pedir). Corte sem legenda só se o usuário pedir explicitamente. Se a postagem automática estiver ligada, os cortes já saem **agendados** no TikTok e no Instagram Reels pela API grátis do Buffer, sem o usuário escolher nada.
+Resultado: cortes verticais 9:16 em 1080p com a webcam do streamer detectada sozinha (câmera em cima + jogo embaixo, ou retrato quando a câmera está em tela cheia) e um `publicacao.md` com título, descrição com crédito e hashtags. **Por padrão todo corte sai com a legenda inteligente** (passo 4b, detalhes em `LEGENDAR.md`): Montserrat Black compacta, só branco com o amarelo passando na palavra dita, quem fala separado, posição que não cobre o personagem, revisada por você antes de gravar. **O título na caixa amarela fica desligado** (o usuário tirou; só ligue `"titulo_no_video": true` se ele pedir). Corte sem legenda só se o usuário pedir explicitamente. A postagem automática foi descontinuada (o Buffer saiu do ar): o usuário posta os cortes à mão, e o `publicacao.md` já traz título, descrição com crédito e hashtags.
 
 Fale com o usuário em linguagem simples, sem jargão técnico. Ele não precisa saber de workflows, ramos ou API.
 
@@ -39,10 +39,6 @@ Os workflows do robô:
 | `gravar-bloco.yml` | grava um bloco ao vivo, transcreve durante, encadeia o próximo bloco, espera os cortes e renderiza (ver 2b) | `url`, `canal`, `bloco` (min), `espera` (min) |
 | `vigia.yml` | a cada ~10 min, liga `gravar-bloco.yml` para os canais de `canais.txt` que entraram ao vivo | — |
 | `legendar.yml` | legenda inteligente em duas etapas: `rascunho` (transcreve palavra por palavra, separa vozes, escolhe posição) → você revisa → `gravar` (publica o legendado por cima de `corte_<id>_vertical.mp4`, guardando o `corte_<id>_limpo.mp4`); também legenda vídeo avulso (`video`) | `etapa`, `job`, `video`, `so`, `estilo`, `opcoes` |
-| `postar.yml` | agenda os cortes no TikTok e no Instagram pelo Buffer; roda sozinho de hora em hora para empurrar a reserva quando a fila de 10 do Buffer abre vaga; `teste=sim` confere as contas sem publicar | `job`, `so`, `teste` |
-
-### Postagem automática
-Configuração única (conta grátis no Buffer + segredo `BUFFER_API_KEY`) e todo o resto estão em **`POSTAR.md`**.
 
 ---
 
@@ -116,40 +112,24 @@ Critérios de um corte viral:
      - **Câmera vazia**: trecho em que o streamer sai da câmera e ninguém fala é cortado sozinho (só tira pausa ≥1,2 s; nunca corta fala; não corta se sobrariam <8 s ou se a câmera ficou vazia em >60% do corte). Padrão ligado em `retrato`/`chamada`; no layout de jogo+webcam só com `"cortar_vazio": true` (desligue com `false`). Log: `CAMERA_VAZIA removido 22.6-41.9s (19.2s)`.
      - Cada corte publica `corte_<id>.cena.json` (layout, janela, linha de presença `#`=na câmera `.`=fora, trechos removidos).
    - `publicacao.md`: por corte, título para YouTube/TikTok (≤70 caracteres, com gancho; emoji pode), descrição de 1-2 linhas com **crédito obrigatório** ("Créditos: <canal> – <link do canal>"), hashtags e ideia de thumbnail.
-   - `postagem.json`: os textos no formato que o robô posta (detalhes em `POSTAR.md`). **Sempre crie**, mesmo sem a postagem configurada:
-     ```json
-     {"cortes": [{"id": "01",
-       "titulo": "Faltou 2 SEGUNDOS pro recorde… e o yuri22 surtou 😱",
-       "legenda": "Faltou 2 segundos pro recorde 😱 Quem aguentaria? Créditos: yuri22 (kick.com/yuri22) #yuri22 #gta #kick #cortes #shorts",
-       "descricao": "Na maratona pra zerar todos os GTAs, o desafio escapa por um triz.\nCréditos: yuri22 – https://kick.com/yuri22"}]}
-     ```
-     - `titulo` → título do YouTube Shorts (≤70, gancho forte).
-     - `legenda` → legenda do TikTok/Reels: 1 frase de gancho ou pergunta que puxe comentário + crédito curto + 3-5 hashtags (canal, jogo, plataforma, `#cortes`, `#shorts`). Até ~150 caracteres antes das hashtags.
-     - `descricao` → descrição do YouTube com o crédito completo (as hashtags da legenda são acrescentadas sozinhas).
-     - Opcionais (não pergunte ao usuário; use o padrão): `horarios` (padrão `["12:00","15:00","18:00","21:00"]`, 1 corte por horário, a partir do próximo), `fuso` (padrão `America/Sao_Paulo`), `redes` (padrão: todas conectadas). Ordene os cortes do mais forte para o mais fraco — o mais forte sai primeiro.
 2. Commit, `git pull --rebase`, push, dispare `renderizar.yml` (3-6 min).
 3. Baixe a Release e **confira 1-2 quadros de cada corte** (ffmpeg → png → Read) e os `facecam_<id>.jpg` (caixa amarela = webcam achada):
    - A caixa pegou só a webcam? Não ficou nenhuma frase por cima do vídeo (a menos que o usuário tenha pedido)?
    - Se errou a webcam: refaça só aquele corte com `facecam` manual (copie a caixa de outro corte da mesma live, que costuma ser igual) usando `inputs[so]=<id>`.
    - Cena de chamada: os dois rostos aparecem (o de quem está na chamada em cima)? Se o streamer saiu da câmera, o trecho vazio sumiu?
    - **Re-renderizou um corte que já tinha legenda?** O `renderizar.yml` apaga sozinho o `corte_<id>_limpo.mp4` antigo da Release (log `limpo antigo apagado`), então o `legendar.yml` pega o vídeo novo. Refaça a revisão da legenda: se a câmera vazia tirou um trecho, os tempos mudaram.
-4. Faça o passo 4b (legenda inteligente) antes de entregar — é o padrão; pule só se o usuário pedir corte sem legenda. Entregue com `SendUserFile` (os .mp4 + `publicacao.md`) e uma tabela curta: corte, tempo na live, por que é viral — e siga direto para o passo 5, sem perguntar.
+4. Faça o passo 4b (legenda inteligente) antes de entregar — é o padrão; pule só se o usuário pedir corte sem legenda. Entregue com `SendUserFile` (os .mp4 + `publicacao.md`) e uma tabela curta: corte, tempo na live, por que é viral — e encerre lembrando o usuário de dar crédito ao streamer ao postar.
 
 ## 4b. Legenda inteligente (padrão em todo corte)
 
 Siga **`LEGENDAR.md`**. Resumo:
 1. `legendar.yml` com `etapa=rascunho` e `job=<job>` (todos os cortes da Release; `so` para só alguns). ~2-4 min por corte.
 2. `git pull`; para cada corte leia `jobs/<job>/legendas/<id>.bruto.json` e olhe `<id>.posicoes.jpg`. Escreva `<id>.editado.json` (corrigir palavras, juntar as vozes em 2 pelo sentido da conversa, quebrar frases em pontos naturais, tirar o que não dá para entender, conferir posição), rode `legenda_inteligente.py montar` e faça commit + push dos `<id>.json`.
-3. `legendar.yml` com `etapa=gravar` e `job=<job>`. O legendado substitui `corte_<id>_vertical.mp4` na Release (o original fica como `corte_<id>_limpo.mp4`), então o passo 5 já posta com legenda.
+3. `legendar.yml` com `etapa=gravar` e `job=<job>`. O legendado substitui `corte_<id>_vertical.mp4` na Release (o original fica como `corte_<id>_limpo.mp4`).
 4. Confira 2-3 quadros de cada corte antes de entregar.
 Não pergunte estilo, tamanho, cor nem posição: está tudo decidido (Montserrat Black compacta, branco + amarelo na palavra dita, embaixo, subindo só quando cobriria o personagem). **Vídeo avulso** (não é corte de live): mesmo fluxo, passando `video=<link>` no rascunho e um `job` novo (`AAAA-MM-DD-assunto`).
-
-## 5. Postar sozinho (automático, sem perguntar)
-
-Assim que os cortes passarem na conferência do passo 4 (e do 4b; só os aprovados; um corte com webcam errada só vai depois de refeito), siga **`POSTAR.md`**: confirme o `postagem.json`, dispare `postar.yml` e acrescente na tabela de entrega quando cada corte sai. Não pergunte redes, horários nem legendas.
 
 ## Avisos ao usuário (uma vez, sem sermão)
 - Cortar live de terceiros sem permissão pode gerar strike/desmonetização; muitos streamers liberam cortes com crédito.
 - Em repositório público, as transcrições e os cortes ficam visíveis; os vídeos completos das lives não ficam salvos.
 - A legenda vem da transcrição automática revisada por você, que lê o texto mas não escuta o áudio: em gritaria, uma palavra ou outra pode escapar.
-- Com a postagem automática ligada, os cortes vão ao ar sem revisão dele; se quiser ver antes, basta dizer "não posta ainda" e o passo 5 fica para quando ele mandar.

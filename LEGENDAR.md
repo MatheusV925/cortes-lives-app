@@ -53,7 +53,7 @@ git add jobs/<job>/legendas && git commit -m "legenda revisada: <job>" && git pu
 ```
 gh api -X POST $R/actions/workflows/legendar.yml/dispatches -f ref=main -f 'inputs[etapa]=gravar' -f 'inputs[job]=<job>'
 ```
-Para cada `<id>.json`, guarda o vídeo sem legenda como `corte_<id>_limpo.mp4` (uma vez só, para poder refazer) e publica o legendado por cima de `corte_<id>_vertical.mp4` — é esse que o `postar.yml` posta. ~2-3 min por corte (mais uma passada para cada posição diferente).
+Para cada `<id>.json`, guarda o vídeo sem legenda como `corte_<id>_limpo.mp4` (uma vez só, para poder refazer) e publica o legendado por cima de `corte_<id>_vertical.mp4`. ~2-3 min por corte (mais uma passada para cada posição diferente).
 
 ### 5. Conferir e entregar
 Baixe o `corte_<id>_vertical.mp4` e olhe uns quadros (`ffmpeg -ss <t> -i v.mp4 -frames:v 1 q.png`): legenda branca com a palavra em amarelo, sem cortar nas bordas, sem cobrir personagem nem rosto, acentos certos, segunda pessoa em itálico. Entregue com `SendUserFile` (vídeo avulso: versão em 720p se for grande).
